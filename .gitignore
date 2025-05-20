@@ -1,0 +1,26 @@
+# ESP-IDF build artifacts
+build/
+dependencies.lock
+
+# ESP-IDF configuration
+sdkconfig
+sdkconfig.old
+
+# VS Code and Dev Container
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.devcontainer/devcontainer-lock.json
+
+# Temporary files
+*.o
+*.a
+*.d
+*.swp
+*.swo
+*.tmp
+
+# macOS/Windows files
+.DS_Store
+Thumbs.db

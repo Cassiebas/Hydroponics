@@ -11,7 +11,7 @@ typedef struct AdcConfig {
     adc_atten_t atten;
 } AdcConfig_t;
 
-static constexpr size_t MOVING_AVG_WINDOW = 16;
+static constexpr size_t MOVING_AVG_WINDOW = 50;
 
 class Adc {
     adc_oneshot_unit_handle_t handle_;

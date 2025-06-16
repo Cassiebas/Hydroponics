@@ -19,9 +19,7 @@ struct UartConfig {
 class Uart {
     UartConfig config_;
     uint8_t* rx_buffer_;
-
-    private:
-        void init();
+    void init();
 
     public:
         Uart(const UartConfig& config);

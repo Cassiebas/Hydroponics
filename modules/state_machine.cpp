@@ -1,10 +1,13 @@
 #include "state_machine.hpp"
 #include "tds.hpp"
 #include "ntc.hpp"
+#include "ph.hpp"
 #include "ultrasonic.hpp"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+#include <stdio.h> // Add this for fflush
 
 static const char* TAG = "state_machine";
 
@@ -16,7 +19,7 @@ StateMachine::StateMachine(const std::vector<AdcConfig>& adc_configs, const Uart
       current_state_(State::SENSOR_DATA_ACQUISITION),
       actuator_substate_(ActuatorSubstate::ON_OFF_CONTROL) {
     // Initialize sensors
-    sensors_.push_back(std::make_unique<TDS>(adc_, adc_configs[0], 0));
+    sensors_.push_back(std::make_unique<TDS>(adc_, adc_configs[0], 0, sensor_data_));
     sensors_.push_back(std::make_unique<NTC>(adc_, adc_configs[1], 1));
     sensors_.push_back(std::make_unique<Ultrasonic>(uart_));
 
@@ -55,12 +58,11 @@ void StateMachine::sensor_data_acquisition() {
         if (ret == ESP_OK) {
             sensor_data_[i].value = value;
         } else {
-            ESP_LOGW(TAG, "Failed to read sensor %d: %s", i, esp_err_to_name(ret));
             sensor_data_[i].value = 0.0f;
         }
     }
 
-    ESP_LOGI(TAG, "Sensor Data - TDS: %.0f ppm, Temperature: %.2f °C, Water Level: %.1f cm",
+    ESP_LOGI(TAG, "Sensor Data - TDS: %.2f ppm, Temperature: %.2f °C, Water-Level : %.2f",
              sensor_data_[0].value, sensor_data_[1].value, sensor_data_[2].value);
 }
 

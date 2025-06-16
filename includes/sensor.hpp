@@ -9,7 +9,8 @@ struct SensorData {
     enum class Type {
         TDS,
         NTC,
-        WATER_LEVEL
+        WATER_LEVEL,
+        PH
     };
     Type type;
     float value; // TDS (ppm), Temperature (°C), or Water Level (cm), etc..

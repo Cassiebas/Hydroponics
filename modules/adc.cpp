@@ -138,37 +138,6 @@ esp_err_t Adc::read(size_t channel_idx, float& voltage, float& value) {
         return ESP_ERR_INVALID_STATE;
     }
 
-    float smoothed_voltage = compute_moving_average(voltage, channel_idx);
-
-    // Sensor-specific calculations
-    if (configs_[channel_idx].channel == ADC_CHANNEL_1) {
-        value = smoothed_voltage * 1667.0f; // TDS calculation
-        // ESP_LOGI(TAG, "Channel %d (TDS): ADC: %d, Voltage: %.3fV, Smoothed: %.3fV, TDS: %.0f ppm",
-        //          channel_idx, raw_adc, voltage, smoothed_voltage, value);
-    } else if (configs_[channel_idx].channel == ADC_CHANNEL_2) {
-        const float R_REF = 10000.0f;
-        if (smoothed_voltage < 0.01f || smoothed_voltage > 3.29f) {
-            ESP_LOGW(TAG, "Invalid NTC voltage: %.3fV", smoothed_voltage);
-            value = 0.0f;
-            return ESP_ERR_INVALID_STATE;
-        }
-        float r_ntc = R_REF * ((3.3f / smoothed_voltage) - 1.0f);
-        const float A = 0.8999648402e-3f;
-        const float B = 2.494581846e-4f;
-        const float C = 2.002476456e-7f;
-        float ln_r = log(r_ntc);
-        float ln_r_cube = ln_r * ln_r * ln_r;
-        float temp_k = 1.0f / (A + B * ln_r + C * ln_r_cube);
-        float temp_c = temp_k - 273.15f;
-        value = temp_c;
-        // ESP_LOGI(TAG, "Channel %d (NTC): ADC: %d, Voltage: %.3fV, Smoothed: %.3fV, Resistance: %.0fΩ, Temperature: %.2f°C",
-        //          channel_idx, raw_adc, voltage, smoothed_voltage, r_ntc, temp_c);
-        // ESP_LOGD(TAG, "NTC: ln(R)=%.3f, ln(R)^3=%.3f, Temp_K=%.2f", ln_r, ln_r_cube, temp_k);
-    } else {
-        value = smoothed_voltage * 1000.0f;
-        // ESP_LOGI(TAG, "Channel %d: ADC: %d, Voltage: %.3fV, Smoothed: %.3fV, Value: %.2f",
-        //          channel_idx, raw_adc, voltage, smoothed_voltage, value);
-    }
-
+    voltage = compute_moving_average(voltage, channel_idx);
     return ESP_OK;
 }

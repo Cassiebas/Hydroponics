@@ -8,7 +8,8 @@ static const char* TAG = "sensor_reader";
 void state_machine_task(void* pvParameters) {
     std::vector<AdcConfig> adc_configs = {
         { ADC_CHANNEL_1, ADC_ATTEN_DB_6 },
-        { ADC_CHANNEL_2, ADC_ATTEN_DB_12 }
+        { ADC_CHANNEL_2, ADC_ATTEN_DB_12 },
+        // { ADC_CHANNEL_3, ADC_ATTEN_DB_12 }
     };
 
     UartConfig uart_config = {
@@ -22,7 +23,6 @@ void state_machine_task(void* pvParameters) {
     StateMachine state_machine(adc_configs, uart_config, TANK_HEIGHT_CM);
     state_machine.run();
 }
-
 extern "C" void app_main() {
     ESP_LOGI(TAG, "Starting sensor reader with state machine...");
     xTaskCreate(state_machine_task, "state_machine_task", 4096, NULL, 5, NULL);

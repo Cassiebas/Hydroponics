@@ -9,13 +9,11 @@ Ultrasonic::Ultrasonic(Uart& uart)
 }
 
 esp_err_t Ultrasonic::read(float& value) {
-    float distance_cm;
-    if (uart_.read_sen0311_distance(distance_cm)) {
-        value = distance_cm;
+    if (uart_.read_sen0311_distance(value)) {
         ESP_LOGD(TAG, "Ultrasonic Sensor: Distance=%.1f cm", value);
         return ESP_OK;
     } else {
-        ESP_LOGW(TAG, "Ultrasonic Sensor read failed");
+        // ESP_LOGW(TAG, "Ultrasonic Sensor read failed");
         value = 0.0f;
         return ESP_FAIL;
     }

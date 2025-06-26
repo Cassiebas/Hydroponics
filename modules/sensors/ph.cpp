@@ -10,38 +10,51 @@ static const char* TAG = "ph";
 #define MIN_CURRENT 4.0f
 #define MAX_CURRENT 20.0f
 
-PH::PH(Adc& adc, const AdcConfig& config, size_t channel_idx)
-    : Sensor(SensorData::Type::PH), adc_(adc), config_(config), channel_idx_(channel_idx) {
-    ESP_LOGI(TAG, "PH Sensor initialized on ADC channel %d", config_.channel);
+// Temperature compensation
+#define TEMP_COEFF -0.03f // pH units per °C deviation from 25°C
+#define REF_TEMP 25.0f    // Reference temperature (°C)
+
+PH::PH(Adc& adc, const AdcConfig& config, size_t channel_idx, const std::vector<SensorData>& sensor_data)
+    : Sensor(SensorData::Type::PH), 
+    adc_(adc), config_(config), 
+    channel_idx_(channel_idx), 
+    sensor_data_(sensor_data) {
+    ESP_LOGI(TAG, "PH Sensor initialized on ADC channel %d with 12dB attenuation", config_.channel);
 }
 
-esp_err_t PH::read(float& value) { 
+esp_err_t PH::read(float& value) {
     float voltage;
-    esp_err_t ret = adc_.read(channel_idx_, voltage, value); if (ret == ESP_OK) {
-    //Convert voltage to current (I = V / R)
-    float current_mA = (voltage / SHUNT_RESISTOR) * 1000.0f;
+    esp_err_t ret = adc_.read(channel_idx_, voltage);
+    // ESP_LOGI(TAG, "pH Voltage: %.3fV", voltage);
 
-    // Validate current range (4-20mA)
-    if (current_mA < MIN_CURRENT - 0.5f || current_mA > MAX_CURRENT + 0.5f) {
-        ESP_LOGW(TAG, "Current out of range: %.2f mA (expected 4-20 mA)", current_mA);
-        value = 0.0f;
-        return ESP_ERR_INVALID_RESPONSE;
-    }
-    
-    // Calculate pH using S-pH-01 formula: pH = 14 * (current - 4) / 16
-    value = 14.0f * (current_mA - MIN_CURRENT) / 16.0f;
-    
-    // Ensure pH is within 0-14 range
-    if (value < 0.0f){
-        value = 0.0f;
-    }
-    else if (value > 14.0f) {
-        value = 14.0f;
-    }
+    if (ret == ESP_OK) {
+        // Step 1: Validate voltage range (0-2V, buffer for safety)
+        if (voltage < 0.0f || voltage > 2.5f) {
+            ESP_LOGW(TAG, "Voltage out of range: %.3fV (expected ~0-2.5V)", voltage);
+            value = 0.0f;
+            return ESP_ERR_INVALID_RESPONSE;
+        }
 
-    ESP_LOGD(TAG, "pH Sensor: Voltage=%.3fV, Current=%.2f mA, pH=%.2f", voltage, current_mA, value);
+        // Step 2: Calculate uncompensated pH with slight offset correction
+        float pH_uncompensated = 7.5f * voltage - 0.275f;
+
+        // Step 3: Apply temperature compensation
+        float temperature = 0.0f;
+        for (const auto& data : sensor_data_) {
+            if (data.type == SensorData::Type::NTC) {
+                temperature = data.value;
+                break;
+            }
+        }
+        float pH_compensated = pH_uncompensated + (TEMP_COEFF * (temperature - REF_TEMP));
+
+        // Step 4: Ensure pH is within 0-14 range
+        value = (pH_compensated < 0.0f) ? 0.0f : (pH_compensated > 14.0f) ? 14.0f : pH_compensated;
+
+        ESP_LOGD(TAG, "PH Sensor: Voltage=%.3fV, Temp=%.2f°C, pH_uncomp=%.2f, pH_comp=%.2f",
+                 voltage, temperature, pH_uncompensated, value);
     } else {
-        ESP_LOGW(TAG, "pH Sensor read failed: %s", esp_err_to_name(ret));
+        ESP_LOGW(TAG, "PH Sensor read failed: %s", esp_err_to_name(ret));
         value = 0.0f;
     }
     return ret;

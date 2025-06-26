@@ -105,7 +105,7 @@ float Adc::compute_moving_average(float new_voltage, size_t channel_idx) {
     return sum / MOVING_AVG_WINDOW;
 }
 
-esp_err_t Adc::read(size_t channel_idx, float& voltage, float& value) {
+esp_err_t Adc::read(size_t channel_idx, float& voltage) {
     if (channel_idx >= configs_.size()) {
         ESP_LOGE(TAG, "Invalid channel index: %d", channel_idx);
         return ESP_ERR_INVALID_ARG;

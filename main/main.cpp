@@ -9,7 +9,7 @@ void state_machine_task(void* pvParameters) {
     std::vector<AdcConfig> adc_configs = {
         { ADC_CHANNEL_1, ADC_ATTEN_DB_6 },
         { ADC_CHANNEL_2, ADC_ATTEN_DB_12 },
-        // { ADC_CHANNEL_3, ADC_ATTEN_DB_12 }
+        { ADC_CHANNEL_3, ADC_ATTEN_DB_12 }
     };
 
     UartConfig uart_config = {

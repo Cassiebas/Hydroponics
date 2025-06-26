@@ -11,7 +11,7 @@ NTC::NTC(Adc& adc, const AdcConfig& config, size_t channel_idx)
 
 esp_err_t NTC::read(float& value) {
     float voltage;
-    esp_err_t ret = adc_.read(channel_idx_, voltage, value);
+    esp_err_t ret = adc_.read(channel_idx_, voltage);
     if (ret == ESP_OK) {
         const float R_REF = 10000.0f;
         if (voltage < 0.01f || voltage > 3.29f) {

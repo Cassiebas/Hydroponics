@@ -25,7 +25,7 @@ class Adc {
     public:
         Adc(const std::vector<AdcConfig_t>& configs);
         ~Adc();
-        esp_err_t read(size_t channel_idx, float& voltage, float& value);
+        esp_err_t read(size_t channel_idx, float& voltage);
 
     private:
         void init();

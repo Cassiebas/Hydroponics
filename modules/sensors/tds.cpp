@@ -19,7 +19,9 @@ TDS::TDS(Adc& adc, const AdcConfig& config, size_t channel_idx, const std::vecto
 
 esp_err_t TDS::read(float& value) {
     float voltage;
-    esp_err_t ret = adc_.read(channel_idx_, voltage, value);
+    esp_err_t ret = adc_.read(channel_idx_, voltage);
+    ESP_LOGI(TAG, "TDS Voltage: %.3fV", voltage);
+    
     if (ret == ESP_OK) {
         // Step 1: Convert voltage to EC (µS/cm) using datasheet formula
         float ec_raw = EC_SCALING_FACTOR * voltage;  // EC = 1000 * VOLTAGE
@@ -40,8 +42,6 @@ esp_err_t TDS::read(float& value) {
         // Step 4: Convert EC to TDS (ppm) using K factor
         value = EC_TO_TDS_FACTOR_K * ec_compensated;  // TDS = K * EC_compensated
 
-        // ESP_LOGD(TAG, "TDS Sensor: Voltage=%.3fV, EC_raw=%.0f µS/cm, EC_calibrated=%.0f µS/cm, EC_compensated=%.0f µS/cm, TDS=%.0f ppm",
-        //          voltage, ec_raw, ec_calibrated, ec_compensated, value);
     } else {
         ESP_LOGW(TAG, "TDS Sensor read failed: %s", esp_err_to_name(ret));
         value = 0.0f;

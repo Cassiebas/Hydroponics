@@ -15,18 +15,20 @@ StateMachine::StateMachine(const std::vector<AdcConfig>& adc_configs, const Uart
     : adc_(adc_configs),
       uart_(uart_config),
       tank_height_cm_(tank_height_cm),
-      sensor_data_(3),
+      sensor_data_(4),
       current_state_(State::SENSOR_DATA_ACQUISITION),
       actuator_substate_(ActuatorSubstate::ON_OFF_CONTROL) {
     // Initialize sensors
     sensors_.push_back(std::make_unique<TDS>(adc_, adc_configs[0], 0, sensor_data_));
     sensors_.push_back(std::make_unique<NTC>(adc_, adc_configs[1], 1));
+    sensors_.push_back(std::make_unique<PH>(adc_, adc_configs[2], 2, sensor_data_));
     sensors_.push_back(std::make_unique<Ultrasonic>(uart_));
 
     // Initialize sensor data
     sensor_data_[0].type = SensorData::Type::TDS;
     sensor_data_[1].type = SensorData::Type::NTC;
     sensor_data_[2].type = SensorData::Type::WATER_LEVEL;
+    sensor_data_[3].type = SensorData::Type::PH;
 
     ESP_LOGI(TAG, "State machine initialized with %d sensors", sensors_.size());
 }
@@ -62,8 +64,8 @@ void StateMachine::sensor_data_acquisition() {
         }
     }
 
-    ESP_LOGI(TAG, "Sensor Data - TDS: %.2f ppm, Temperature: %.2f °C, Water-Level : %.2f",
-             sensor_data_[0].value, sensor_data_[1].value, sensor_data_[2].value);
+    ESP_LOGI(TAG, "TDS: %.2f ppm, pH: %.2f pH, Tem: %.2f °C, Water-Level : %.2f",
+             sensor_data_[0].value, sensor_data_[2].value, sensor_data_[1].value, sensor_data_[3].value);
 }
 
 void StateMachine::actuator_control() {
